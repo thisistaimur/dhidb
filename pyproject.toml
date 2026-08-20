@@ -5,14 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "dhidb"
 dynamic = ["version"]
-description = "Read-only Python access to the global 300 m Dynamic Habitat Indices database"
+description = "TileDB access to the global 300 m Dynamic Habitat Indices database"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 authors = [
   { name = "Taimur Khan", email = "taimur.khan@ufz.de" },
-  { name = "Julian Oeser" },
-  { name = "Ingolf Kühn" },
 ]
 keywords = ["biodiversity", "DHI", "remote sensing", "S3", "TileDB"]
 classifiers = [
