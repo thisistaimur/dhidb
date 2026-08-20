@@ -1,0 +1,123 @@
+name: CI and release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  versioning:
+    name: Compute semantic version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.semver.outputs.version-string }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Compute version from Git history
+        id: semver
+        uses: bitshifted/git-auto-semver@v2
+        with:
+          create_tag: false
+          main_branch: main
+          initial_version: 0.1.0
+      - name: Display version
+        run: echo "Candidate version is ${{ steps.semver.outputs.version-string }}"
+
+  test:
+    name: Test Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install package and test dependencies
+        run: python -m pip install -e ".[test]"
+      - name: Lint
+        run: ruff check src tests
+      - name: Test
+        run: pytest --cov=dhidb --cov-report=term-missing
+
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    needs: [versioning, test]
+    env:
+      SETUPTOOLS_SCM_PRETEND_VERSION_FOR_DHIDB: ${{ needs.versioning.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build wheel and source distribution
+        run: |
+          python -m pip install build
+          python -m build
+      - name: Check distributions
+        run: |
+          python -m pip install twine
+          twine check dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/
+          if-no-files-found: error
+
+  release:
+    name: Tag, release, and publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: [versioning, build]
+    environment:
+      name: pypi
+      url: https://pypi.org/project/dhidb/
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-distributions
+          path: dist
+      - name: Create semantic version tag
+        env:
+          VERSION: ${{ needs.versioning.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git rev-parse "v${VERSION}" >/dev/null 2>&1; then
+            echo "Tag v${VERSION} already exists"
+          else
+            git tag -a "v${VERSION}" -m "Release v${VERSION}"
+            git push origin "v${VERSION}"
+          fi
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.versioning.outputs.version }}
+          generate_release_notes: true
+          files: dist/*
+      - name: Publish to PyPI using trusted publishing
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI }}

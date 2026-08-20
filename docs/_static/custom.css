@@ -1,0 +1,75 @@
+:root {
+  --dhidb-black: #050505;
+  --dhidb-panel: #111416;
+  --dhidb-purple: #440154;
+  --dhidb-blue: #31688e;
+  --dhidb-green: #35b779;
+  --dhidb-yellow: #fde725;
+  --pst-color-primary: #35b779;
+  --pst-color-link: #35b779;
+  --pst-color-link-hover: #fde725;
+}
+
+html[data-theme="light"],
+html[data-theme="dark"] {
+  --pst-color-background: var(--dhidb-black);
+  --pst-color-on-background: #f4f7f5;
+  --pst-color-surface: var(--dhidb-panel);
+  --pst-color-on-surface: #e8efec;
+  --pst-color-text-base: #eef4f1;
+  --pst-color-text-muted: #aab8b2;
+  --pst-color-border: #27302d;
+}
+
+body,
+.bd-header,
+.bd-sidebar-primary,
+.bd-sidebar-secondary,
+.bd-main .bd-content .bd-article-container {
+  background: var(--dhidb-black);
+  color: #eef4f1;
+}
+
+.bd-header {
+  border-bottom: 1px solid #27302d;
+}
+
+a,
+.toc-entry a.nav-link.active,
+.bd-links .current > a {
+  color: var(--dhidb-green);
+}
+
+a:hover {
+  color: var(--dhidb-yellow);
+}
+
+code {
+  color: #9be26d;
+}
+
+pre,
+div.highlight {
+  background: #0d1110;
+  border: 1px solid #27302d;
+}
+
+.hero-logo {
+  margin: 1rem auto 2rem;
+  max-height: 300px;
+  object-fit: contain;
+}
+
+table {
+  border-color: #27302d;
+}
+
+thead {
+  background: linear-gradient(90deg, var(--dhidb-purple), var(--dhidb-blue));
+}
+
+.admonition {
+  background: var(--dhidb-panel);
+  border-left-color: var(--dhidb-green);
+}
+
