@@ -8,6 +8,8 @@
   --pst-color-primary: #35b779;
   --pst-color-link: #35b779;
   --pst-color-link-hover: #fde725;
+  --pst-color-muted: #b7c4be;
+  --pst-color-inline-code: #b7f774;
 }
 
 html[data-theme="light"],
@@ -30,8 +32,55 @@ body,
   color: #eef4f1;
 }
 
+.bd-article-container h1,
+.bd-article-container h2,
+.bd-article-container h3,
+.bd-article-container h4,
+.bd-article-container h5,
+.bd-article-container h6,
+.bd-article-container p.caption {
+  color: #f4f7f5 !important;
+}
+
 .bd-header {
   border-bottom: 1px solid #27302d;
+}
+
+/* Keep search in the sidebar; the header stays focused on navigation. */
+.bd-header .search-button-field {
+  display: none !important;
+}
+
+.dhidb-github-link {
+  color: var(--dhidb-green) !important;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  text-decoration: none;
+}
+
+.dhidb-github-link:hover {
+  color: var(--dhidb-yellow) !important;
+}
+
+.dhidb-top-menu {
+  align-items: center;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.dhidb-top-menu .nav-link {
+  color: #d8f3dc !important;
+  padding: 0.5rem 0.6rem;
+  white-space: nowrap;
+}
+
+.dhidb-top-menu .nav-link:hover {
+  color: var(--dhidb-yellow) !important;
+}
+
+.bd-sidebar-primary .dhidb-top-menu,
+.bd-sidebar-primary .dhidb-github-link {
+  display: none;
 }
 
 a,
@@ -45,13 +94,74 @@ a:hover {
 }
 
 code {
-  color: #9be26d;
+  color: #b7f774 !important;
+  background: #111916;
+  border-color: #27302d;
 }
 
 pre,
 div.highlight {
   background: #0d1110;
   border: 1px solid #27302d;
+}
+
+div.highlight pre {
+  color: #eef4f1;
+}
+
+/* Keep Pygments tokens bright enough against the near-black code background. */
+div.highlight .c,
+div.highlight .ch,
+div.highlight .cm,
+div.highlight .c1,
+div.highlight .cs {
+  color: #94a3a0;
+}
+
+div.highlight .k,
+div.highlight .kc,
+div.highlight .kd,
+div.highlight .kn,
+div.highlight .kp,
+div.highlight .kr,
+div.highlight .kt {
+  color: #7dd3fc;
+}
+
+div.highlight .n,
+div.highlight .na,
+div.highlight .nb,
+div.highlight .nc,
+div.highlight .nd,
+div.highlight .nf,
+div.highlight .nn,
+div.highlight .nv {
+  color: #d8f3dc;
+}
+
+div.highlight .o,
+div.highlight .ow,
+div.highlight .p {
+  color: #fbbf24;
+}
+
+div.highlight .s,
+div.highlight .sa,
+div.highlight .sb,
+div.highlight .sc,
+div.highlight .sd,
+div.highlight .s1,
+div.highlight .s2 {
+  color: #fda4af;
+}
+
+div.highlight .m,
+div.highlight .mb,
+div.highlight .mf,
+div.highlight .mh,
+div.highlight .mi,
+div.highlight .mo {
+  color: #c4b5fd;
 }
 
 .hero-logo {
@@ -72,4 +182,3 @@ thead {
   background: var(--dhidb-panel);
   border-left-color: var(--dhidb-green);
 }
-

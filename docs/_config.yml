@@ -22,14 +22,20 @@ html:
   extra_footer: >-
     DHIDB is developed at the Helmholtz Centre for Environmental Research - UFZ.
 sphinx:
+  config:
+    templates_path:
+      - _templates
+    html_css_files:
+      - custom.css
+    html_theme_options:
+      navbar_center:
+        - navbar-menu
+      navbar_end:
+        - navbar-repository
+      logo:
+        text: DHIDB
+      show_nav_level: 2
   extra_extensions:
     - sphinx.ext.autodoc
     - sphinx.ext.napoleon
     - sphinx_copybutton
-  config:
-    html_css_files:
-      - custom.css
-    html_theme_options:
-      logo:
-        text: DHIDB
-      show_nav_level: 2
