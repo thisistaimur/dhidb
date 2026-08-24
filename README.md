@@ -4,6 +4,9 @@
 
 # dhidb
 
+[![PyPI version](https://img.shields.io/pypi/v/dhidb.svg?logo=pypi&label=PyPI)](https://pypi.org/project/dhidb/)
+[![CI and release](https://github.com/thisistaimur/dhidb/actions/workflows/ci-release.yml/badge.svg)](https://github.com/thisistaimur/dhidb/actions/workflows/ci-release.yml)
+
 `dhidb` provides read-only Python access to the global 300 m Dynamic Habitat
 Indices database stored as a dense TileDB array on public S3-compatible object
 storage. It supports point, bounding-box, and polygon queries without first
@@ -40,10 +43,12 @@ with DHIProvider() as db:
 
 ## Documentation
 
-The Jupyter Book source is in [`docs/`](docs/). Build it locally with:
+The Docusaurus website source is in [`website/`](website/). Build it locally
+with:
 
 ```bash
-jupyter-book build docs
+npm --prefix website install
+npm --prefix website run start
 ```
 
 ## Data variables

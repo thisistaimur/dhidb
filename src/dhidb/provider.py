@@ -60,6 +60,11 @@ def _normalise_endpoint(endpoint_url: str) -> tuple[str, str]:
 
 
 def _tiledb_context(config: DHIConfig):
+    # The public endpoint currently rejects optional AWS checksum headers.
+    # Keep this internal until it supports them; explicit user settings win.
+    os.environ.setdefault("AWS_RESPONSE_CHECKSUM_VALIDATION", "when_required")
+    os.environ.setdefault("AWS_REQUEST_CHECKSUM_CALCULATION", "when_required")
+
     import tiledb
 
     threads = str(min(os.cpu_count() or 4, 8))

@@ -35,11 +35,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-docs = [
-  "jupyter-book>=1.0,<2",
-  "matplotlib>=3.8",
-  "sphinx-copybutton>=0.5",
-]
 test = [
   "build>=1.2",
   "pytest>=8",
