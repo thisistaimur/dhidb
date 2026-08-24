@@ -1,8 +1,4 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/thisistaimur/dhidb/main/assetts/DHIDB_logo_white.png" alt="DHIDB" width="720">
-</p>
-
-# dhidb
+# dhidb <a href='https://thisistaimur.github.io/dhidb/'><img src='https://raw.githubusercontent.com/thisistaimur/dhidb/main/assetts/DHIDB_logo_white.png' align="right" height="200" /></a>
 
 [![PyPI version](https://img.shields.io/pypi/v/dhidb.svg?logo=pypi&label=PyPI)](https://pypi.org/project/dhidb/)
 [![CI and release](https://github.com/thisistaimur/dhidb/actions/workflows/ci-release.yml/badge.svg)](https://github.com/thisistaimur/dhidb/actions/workflows/ci-release.yml)
