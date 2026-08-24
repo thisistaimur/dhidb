@@ -55,6 +55,8 @@ overridden through the constructor or the `DHIDB_ENDPOINT_URL` and
   returns a pandas `DataFrame`.
 - `query_bbox(bounds, years=None, variables=None, crs="EPSG:4326")` returns
   an xarray `Dataset`.
+- `iter_bbox(bounds, years=None, variables=None, crs="EPSG:4326",
+  batch_shape={"y": 256, "x": 256})` yields bounded xarray `Dataset` batches.
 - `query_polygon(geometry, years=None, variables=None, crs="EPSG:4326",
   all_touched=False)` returns a masked xarray `Dataset`.
 
@@ -63,3 +65,27 @@ The returned DHI values retain their native units: `dhi_cum` is `m2 m-2 day`,
 `dhi_min` is `m2 m-2`, and `dhi_var` and `dhi_combined` are dimensionless.
 Count variables are numbers of scenes. The API does not rescale these values
 or convert `dhi_combined` into an alternative score.
+
+### Streaming large bounding boxes
+
+`query_bbox()` materializes its complete result in memory. For large areas,
+use `iter_bbox()` to read bounded spatial windows one at a time:
+
+```python
+with DHIProvider() as db:
+    for batch in db.iter_bbox(
+        bounds=(5.8, 47.2, 15.1, 55.1),
+        years=range(2014, 2026),
+        variables=["dhi_cum", "dhi_min", "dhi_var"],
+        batch_shape={"y": 256, "x": 256},
+    ):
+        process(batch)
+```
+
+The iterator yields Xarray datasets with the same `(time, y, x)` dimensions
+and metadata as `query_bbox()`. Windows are read in row-major order and the
+full bounding box is never materialized at once. The provider's `max_cells`
+limit applies to each batch; choose a smaller batch shape if a multi-year
+batch exceeds that limit. Batches are released normally after each loop
+iteration, so callers should process or persist them before requesting the
+next batch.

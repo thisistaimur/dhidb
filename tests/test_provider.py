@@ -48,10 +48,47 @@ def test_query_size_guard(sample_array):
             provider.query_bbox((-180, 87, -176, 90), years=2020)
 
 
+def test_iter_bbox_yields_bounded_batches(sample_array):
+    with DHIProvider(array_uri=sample_array) as provider:
+        batches = list(
+            provider.iter_bbox(
+                (-179.9, 87.1, -176.1, 89.9),
+                years=(year for year in [2020, 2021]),
+                variables=["dhi_cum"],
+                batch_shape={"y": 2, "x": 2},
+            )
+        )
+
+    assert len(batches) == 4
+    assert [(batch.sizes["y"], batch.sizes["x"]) for batch in batches] == [
+        (2, 2),
+        (2, 2),
+        (1, 2),
+        (1, 2),
+    ]
+    np.testing.assert_allclose(
+        np.sort(np.concatenate([batch.dhi_cum.values.ravel() for batch in batches])),
+        np.arange(24),
+    )
+
+
+def test_iter_bbox_validates_batch_shape(sample_array):
+    with DHIProvider(array_uri=sample_array) as provider:
+        with pytest.raises(ValueError, match="exactly 'y' and 'x'"):
+            list(provider.iter_bbox((-180, 87, -176, 90), batch_shape={"y": 2}))
+
+        with pytest.raises(ValueError, match="positive integer"):
+            list(
+                provider.iter_bbox(
+                    (-180, 87, -176, 90),
+                    batch_shape={"y": 0, "x": 2},
+                )
+            )
+
+
 def test_unknown_year_and_variable(sample_array):
     with DHIProvider(array_uri=sample_array) as provider:
         with pytest.raises(ValueError, match="Years not available"):
             provider.query_point(-179.5, 89.5, years=1999)
         with pytest.raises(ValueError, match="Unknown variables"):
             provider.query_point(-179.5, 89.5, variables=["missing"])
-

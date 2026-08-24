@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import os
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -260,6 +260,69 @@ class DHIProvider:
             years=years,
             variables=variables,
         )
+
+    def iter_bbox(
+        self,
+        bounds: tuple[float, float, float, float],
+        *,
+        years: int | Iterable[int] | None = None,
+        variables: Sequence[str] | None = None,
+        crs: str | CRS = "EPSG:4326",
+        batch_shape: Mapping[str, int] | None = None,
+    ) -> Iterator[xr.Dataset]:
+        """Yield bounded Xarray batches for a bounding box.
+
+        ``batch_shape`` specifies the maximum number of grid cells per batch
+        in the ``y`` and ``x`` dimensions. Batches are read lazily in
+        row-major order, so the full bounding box is never materialized at
+        once. The existing ``max_cells`` limit applies independently to each
+        yielded batch.
+        """
+
+        shape = {"y": 256, "x": 256} if batch_shape is None else batch_shape
+        if set(shape) != {"y", "x"}:
+            raise ValueError("batch_shape must contain exactly 'y' and 'x'")
+        try:
+            batch_rows = shape["y"]
+            batch_cols = shape["x"]
+        except (KeyError, TypeError):
+            raise ValueError("batch_shape must contain integer 'y' and 'x' values") from None
+        if (
+            isinstance(batch_rows, bool)
+            or isinstance(batch_cols, bool)
+            or not isinstance(batch_rows, int)
+            or not isinstance(batch_cols, int)
+            or batch_rows <= 0
+            or batch_cols <= 0
+        ):
+            raise ValueError("batch_shape must contain positive integer 'y' and 'x' values")
+
+        grid_bounds = self.grid.transform_bounds(bounds, crs)
+        row0, row1, col0, col1 = self.grid.window_for_bounds(grid_bounds)
+
+        # Normalize iterables once; a generator must be reusable for every
+        # spatial batch.
+        selected_years: int | tuple[int, ...] | None
+        if years is None or isinstance(years, int):
+            selected_years = years
+        else:
+            selected_years = tuple(years)
+        selected_variables = tuple(variables) if variables is not None else None
+        self._year_positions(selected_years)
+        self._validate_variables(selected_variables)
+
+        for batch_row0 in range(row0, row1, batch_rows):
+            batch_row1 = min(batch_row0 + batch_rows, row1)
+            for batch_col0 in range(col0, col1, batch_cols):
+                batch_col1 = min(batch_col0 + batch_cols, col1)
+                yield self._query_window(
+                    row0=batch_row0,
+                    row1=batch_row1,
+                    col0=batch_col0,
+                    col1=batch_col1,
+                    years=selected_years,
+                    variables=selected_variables,
+                )
 
     def query_point(
         self,

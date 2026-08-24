@@ -28,6 +28,28 @@ with DHIProvider() as db:
 The result is an `xarray.Dataset` with `(time, y, x)` dimensions and CRS and
 affine-transform metadata.
 
+## Streaming a large bounding box
+
+For a large AOI, avoid materializing the entire result with `query_bbox()`.
+`iter_bbox()` yields spatial windows lazily while retaining the requested
+years in each batch:
+
+```python
+with DHIProvider() as db:
+    for batch in db.iter_bbox(
+        bounds=(5.8, 47.2, 15.1, 55.1),
+        years=range(2014, 2026),
+        variables=["dhi_cum", "dhi_min", "dhi_var", "valid_count"],
+        batch_shape={"y": 256, "x": 256},
+    ):
+        # Write, aggregate, or pass this bounded Dataset to a model.
+        process(batch)
+```
+
+Each batch contains at most the requested `y` by `x` cells and all selected
+time steps. Reduce the batch dimensions when the selected years and variables
+would exceed the provider's `max_cells` limit.
+
 ## Polygon
 
 Pass a Shapely geometry, GeoJSON mapping, object implementing
@@ -57,4 +79,3 @@ subset = db.query_bbox(
     years=2024,
 )
 ```
-
