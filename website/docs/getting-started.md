@@ -94,6 +94,62 @@ Only the current batch is held by the loop, so memory use is controlled by
 `batch_shape`. Smaller windows may be needed when many years or variables are
 selected.
 
+## Manage memory for large queries
+
+The regular `query_bbox()` and `query_polygon()` methods materialize their
+complete result as an Xarray dataset. Memory use therefore grows with the
+number of selected years, spatial cells, and variables. For a large AOI or a
+long time range, use `iter_bbox()` and process one batch at a time:
+
+```python
+with DHIProvider() as db:
+    for batch in db.iter_bbox(
+        bounds=(5.8, 47.2, 15.1, 55.1),
+        years=range(2014, 2026),
+        variables=["dhi_cum", "dhi_min", "dhi_var"],
+        batch_shape={"y": 256, "x": 256},
+    ):
+        process(batch)
+```
+
+`batch_shape` controls the maximum spatial dimensions of each yielded
+dataset. Reduce the values when selecting many years or variables, or when
+running in a memory-limited environment. The provider also applies a
+`max_cells` safety limit to prevent accidental materialization of an
+oversized query. Increase it only when the result is known to fit in memory:
+
+```python
+with DHIProvider(max_cells=100_000_000) as db:
+    result = db.query_bbox(
+        bounds=(5.8, 47.2, 15.1, 55.1),
+        years=[2020, 2021],
+        variables=["dhi_cum"],
+    )
+```
+
+When the result should be saved rather than held in Python, use
+`export_bbox(..., batch_shape=...)`. It writes each batch directly to NetCDF,
+Zarr, or COG files and keeps memory bounded by the batch size:
+
+```python
+with DHIProvider() as db:
+    files = db.export_bbox(
+        bounds=(5.8, 47.2, 15.1, 55.1),
+        output="exports/germany_dhi",
+        format="zarr",  # also: "netcdf" or "cog"
+        years=range(2014, 2026),
+        variables=["dhi_cum", "dhi_min", "dhi_var", "valid_count"],
+        batch_shape={"y": 256, "x": 256},
+    )
+
+print(f"Wrote {len(files)} batch files")
+```
+
+With `batch_shape` set, the exporter writes one file or store per spatial
+batch. Use `format="cog"` for multiband GeoTIFF output or `format="netcdf"`
+for NetCDF files. Install the corresponding optional dependencies before
+exporting: `pip install "dhidb[zarr]"` or `pip install "dhidb[netcdf]"`.
+
 ## Save a dataset
 
 For a moderate AOI, save the complete Xarray result directly:
