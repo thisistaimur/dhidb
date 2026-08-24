@@ -35,6 +35,10 @@ const config = {
   ],
   themeConfig: {
     image: 'img/DHIDB_logo.png',
+    colorMode: {
+      defaultMode: 'dark',
+      respectPrefersColorScheme: false,
+    },
     navbar: {
       logo: {
         alt: 'DHIDB logo',
