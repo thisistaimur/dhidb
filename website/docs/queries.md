@@ -91,6 +91,56 @@ with DHIProvider() as db:
 Pixels outside the polygon are represented as missing values. Set
 `all_touched=True` to include every grid cell touched by the polygon.
 
+## Streaming a large polygon
+
+`query_polygon()` applies the polygon mask after reading the polygon's full
+bounding box. For a large polygon, stream that bounding box in spatial batches
+and apply the mask to each batch before processing it:
+
+```python
+import json
+
+import xarray as xr
+from pyproj import Transformer
+from rasterio.features import geometry_mask
+from affine import Affine
+from shapely.geometry import shape
+from shapely.ops import transform
+
+with open("study_area.geojson") as source:
+    polygon = shape(json.load(source)["geometry"])
+
+with DHIProvider() as db:
+    # Transform the polygon once into the DHIDB grid CRS.
+    to_grid = Transformer.from_crs(
+        "EPSG:4326", db.grid.crs, always_xy=True
+    ).transform
+    grid_polygon = transform(to_grid, polygon)
+
+    for batch in db.iter_bbox(
+        bounds=grid_polygon.bounds,
+        crs=db.grid.crs,
+        years=range(2014, 2026),
+        variables=["dhi_cum", "dhi_min", "dhi_var"],
+        batch_shape={"y": 256, "x": 256},
+    ):
+        mask = geometry_mask(
+            [grid_polygon.__geo_interface__],
+            out_shape=(batch.sizes["y"], batch.sizes["x"]),
+            transform=Affine(*batch.attrs["transform"]),
+            invert=True,
+        )
+        batch = batch.where(xr.DataArray(mask, dims=("y", "x")))
+        process(batch)
+```
+
+This keeps only one spatial batch in memory at a time. The batch still
+contains all requested years and variables, while pixels outside the polygon
+are represented as missing values. Set `all_touched=True` in
+`geometry_mask()` when boundary-touching cells should be included. The
+example assumes the GeoJSON is in `EPSG:4326`; change the source CRS in the
+transformer when needed.
+
 ## A projected query
 
 The input bounds or geometry need not be in longitude/latitude:
