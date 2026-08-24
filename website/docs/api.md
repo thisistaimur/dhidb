@@ -116,4 +116,5 @@ selected variables, are stored as float32, and include band descriptions.
 With `batch_shape`, NetCDF/Zarr write one `batch_*.nc`/`batch_*.zarr` per
 spatial batch and COG writes one `batch_*_{year}.tif` per batch and year. The
 method returns the paths written. Zarr export requires the optional `zarr`
-dependency (`pip install dhidb[zarr]`).
+dependency (`pip install dhidb[zarr]`). NetCDF export requires a backend such
+as SciPy (`pip install dhidb[netcdf]`).

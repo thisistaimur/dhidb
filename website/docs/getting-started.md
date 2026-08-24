@@ -6,6 +6,37 @@
 pip install dhidb
 ```
 
+DHIDB supports Python 3.10 and newer. The regular installation includes the
+runtime dependencies needed for querying the database:
+
+| Dependency | Version requirement |
+|---|---|
+| `affine` | `>=2.4` |
+| `numpy` | `>=1.26,<3` |
+| `pandas` | `>=2.1` |
+| `pyproj` | `>=3.6` |
+| `rasterio` | `>=1.3` |
+| `shapely` | `>=2.0` |
+| `tiledb` | `>=0.35,<0.38` |
+| `xarray` | `>=2024.1` |
+
+Optional output formats are provided as extras:
+
+```bash
+pip install "dhidb[netcdf]"  # adds scipy>=1.11 for NetCDF export
+pip install "dhidb[zarr]"    # adds zarr>=2.18 for Zarr export
+```
+
+For development and testing, install the test extra (which includes build
+tools, pytest, coverage, Ruff, and `scipy>=1.11`):
+
+```bash
+python -m pip install -e ".[test]"
+```
+
+The extras are feature names, so use `dhidb[netcdf]`, `dhidb[zarr]`, or
+`dhidb[test]` rather than a generic `dhidb[dependency]` extra.
+
 ## Connect to public S3 storage
 
 Public reads use unsigned S3 requests. No access key is required.
@@ -75,8 +106,8 @@ with DHIProvider() as db:
         variables=["dhi_cum", "dhi_min", "dhi_var"],
     )
 
-data.to_netcdf("germany_dhi.nc")
-# Optional: data.to_zarr("germany_dhi.zarr")
+data.to_netcdf("germany_dhi.nc")  # install with: pip install dhidb[netcdf]
+# Optional: data.to_zarr("germany_dhi.zarr")  # install with: pip install dhidb[zarr]
 ```
 
 For large AOIs, write results directly from the streaming exporter instead
@@ -99,7 +130,8 @@ creates one multiband GeoTIFF per year. With `batch_shape`, outputs are
 spatially sharded: NetCDF/Zarr create one file or store per batch, and COG
 creates one multiband GeoTIFF per batch and year. COG bands correspond to the
 selected variables and preserve the DHIDB CRS and affine transform. Install
-Zarr support with `pip install dhidb[zarr]`.
+NetCDF support with `pip install dhidb[netcdf]` and Zarr support with
+`pip install dhidb[zarr]`.
 
 ## Query safety
 

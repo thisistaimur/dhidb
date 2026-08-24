@@ -22,8 +22,43 @@ pip install dhidb
 For development:
 
 ```bash
-python -m pip install -e ".[test,docs]"
+python -m pip install -e ".[test]"
 ```
+
+## Requirements and optional dependencies
+
+DHIDB requires Python 3.10 or newer. The runtime dependencies and the
+compatibility ranges published by the package are:
+
+| Dependency | Supported version range |
+|---|---|
+| `affine` | `>=2.4` |
+| `numpy` | `>=1.26,<3` |
+| `pandas` | `>=2.1` |
+| `pyproj` | `>=3.6` |
+| `rasterio` | `>=1.3` |
+| `shapely` | `>=2.0` |
+| `tiledb` | `>=0.35,<0.38` |
+| `xarray` | `>=2024.1` |
+
+Optional features are installed with package extras. There is no generic
+`dhidb[dependency]` extra; use the feature-specific extra you need:
+
+| Extra | Install command | Adds |
+|---|---|---|
+| `netcdf` | `pip install "dhidb[netcdf]"` | `scipy>=1.11` for NetCDF export |
+| `zarr` | `pip install "dhidb[zarr]"` | `zarr>=2.18` for Zarr export |
+| `test` | `pip install "dhidb[test]"` | build, pytest, coverage, Ruff, and SciPy tooling |
+
+For local development and testing:
+
+```bash
+python -m pip install -e ".[test,netcdf,zarr]"
+```
+
+The documentation website has its own Node.js dependencies in
+[`website/package.json`](website/package.json); they are not part of the
+Python package extras.
 
 ## Quick start
 

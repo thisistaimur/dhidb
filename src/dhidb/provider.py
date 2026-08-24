@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 from collections.abc import Iterable, Iterator, Mapping, Sequence
@@ -390,6 +391,14 @@ class DHIProvider:
 
         for batch_index, dataset in enumerate(datasets):
             if output_format == "netcdf":
+                if not any(
+                    importlib.util.find_spec(module) is not None
+                    for module in ("netCDF4", "h5netcdf", "scipy")
+                ):
+                    raise ModuleNotFoundError(
+                        "NetCDF export requires a backend; install it with "
+                        "'pip install dhidb[netcdf]'."
+                    )
                 filename = f"batch_{batch_index:06d}.nc" if batch_mode else "data.nc"
                 path = output_path / filename
                 if path.exists() and not overwrite:
