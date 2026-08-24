@@ -106,7 +106,6 @@ with DHIProvider() as db:
         format="zarr",
         years=range(2014, 2026),
         variables=["dhi_cum", "dhi_min", "dhi_var"],
-        batch_shape={"y": 256, "x": 256},
     )
 ```
 
