@@ -86,6 +86,57 @@ def test_iter_bbox_validates_batch_shape(sample_array):
             )
 
 
+def test_export_bbox_netcdf_writes_batch_files(sample_array, tmp_path):
+    with DHIProvider(array_uri=sample_array) as provider:
+        paths = provider.export_bbox(
+            (-179.9, 87.1, -176.1, 89.9),
+            tmp_path / "netcdf",
+            format="netcdf",
+            years=2020,
+            variables=["dhi_cum"],
+            batch_shape={"y": 2, "x": 2},
+        )
+
+    assert len(paths) == 4
+    assert all(path.suffix == ".nc" for path in paths)
+
+
+def test_export_bbox_cog_writes_multiband_batch_files(sample_array, tmp_path):
+    with DHIProvider(array_uri=sample_array) as provider:
+        paths = provider.export_bbox(
+            (-179.9, 87.1, -176.1, 89.9),
+            tmp_path / "cog",
+            format="cog",
+            years=2020,
+            variables=["dhi_cum", "valid_count"],
+            batch_shape={"y": 2, "x": 2},
+        )
+
+    assert len(paths) == 4
+    assert all(path.suffix == ".tif" for path in paths)
+
+
+def test_export_bbox_nonbatch_writes_one_output_per_format(sample_array, tmp_path):
+    with DHIProvider(array_uri=sample_array) as provider:
+        netcdf_paths = provider.export_bbox(
+            (-179.9, 87.1, -176.1, 89.9),
+            tmp_path / "netcdf",
+            format="netcdf",
+            years=[2020, 2021],
+            variables=["dhi_cum"],
+        )
+        cog_paths = provider.export_bbox(
+            (-179.9, 87.1, -176.1, 89.9),
+            tmp_path / "cog",
+            format="cog",
+            years=[2020, 2021],
+            variables=["dhi_cum", "valid_count"],
+        )
+
+    assert netcdf_paths == [tmp_path / "netcdf" / "data.nc"]
+    assert cog_paths == [tmp_path / "cog" / "2020.tif", tmp_path / "cog" / "2021.tif"]
+
+
 def test_unknown_year_and_variable(sample_array):
     with DHIProvider(array_uri=sample_array) as provider:
         with pytest.raises(ValueError, match="Years not available"):

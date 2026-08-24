@@ -50,6 +50,29 @@ Each batch contains at most the requested `y` by `x` cells and all selected
 time steps. Reduce the batch dimensions when the selected years and variables
 would exceed the provider's `max_cells` limit.
 
+## Persisting streamed batches
+
+The same streaming path can write results directly to disk:
+
+```python
+with DHIProvider() as db:
+    files = db.export_bbox(
+        bounds=(5.8, 47.2, 15.1, 55.1),
+        output="exports/germany",
+        format="cog",
+        years=[2020, 2021, 2022],
+        variables=["dhi_cum", "dhi_min", "dhi_var"],
+        batch_shape={"y": 512, "x": 512},
+    )
+```
+
+With `batch_shape` set, NetCDF and Zarr create one output per spatial batch,
+while COG creates one multiband raster per spatial batch and year. Without
+`batch_shape`, NetCDF/Zarr create one complete output and COG creates one
+multiband raster per year. COG bands correspond to the selected variables
+and preserve the DHIDB CRS and affine transform. This layout keeps memory
+bounded in batch mode and makes individual files easy to process in parallel.
+
 ## Polygon
 
 Pass a Shapely geometry, GeoJSON mapping, object implementing

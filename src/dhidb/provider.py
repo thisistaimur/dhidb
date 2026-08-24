@@ -324,6 +324,140 @@ class DHIProvider:
                     variables=selected_variables,
                 )
 
+    def export_bbox(
+        self,
+        bounds: tuple[float, float, float, float],
+        output: str | Path,
+        *,
+        format: str = "zarr",
+        years: int | Iterable[int] | None = None,
+        variables: Sequence[str] | None = None,
+        crs: str | CRS = "EPSG:4326",
+        batch_shape: Mapping[str, int] | None = None,
+        overwrite: bool = False,
+    ) -> list[Path]:
+        """Write a bounding box to NetCDF, Zarr, or multiband COG files.
+
+        With ``batch_shape=None`` the complete query is materialized once:
+        NetCDF and Zarr write one output, while COG writes one multiband
+        raster per year. With ``batch_shape`` set, outputs are spatially
+        sharded and written one batch at a time. COG bands are the selected
+        variables and are stored as float32 so mixed source dtypes can share
+        one raster. Returning paths rather than datasets keeps batch export
+        bounded by the configured batch size.
+
+        Zarr support requires the optional ``zarr`` package. COG output uses
+        Rasterio/GDAL and is written in the grid CRS with the batch affine
+        transform.
+        """
+
+        output_path = Path(output)
+        output_path.mkdir(parents=True, exist_ok=True)
+        output_format = format.lower().lstrip(".")
+        aliases = {
+            "nc": "netcdf",
+            "ncdf": "netcdf",
+            "netcdf4": "netcdf",
+            "tif": "cog",
+            "tiff": "cog",
+            "geotiff": "cog",
+        }
+        output_format = aliases.get(output_format, output_format)
+        if output_format not in {"netcdf", "zarr", "cog"}:
+            raise ValueError("format must be one of: 'netcdf', 'zarr', or 'cog'")
+
+        written: list[Path] = []
+        batch_mode = batch_shape is not None
+        if batch_mode:
+            datasets = self.iter_bbox(
+                bounds,
+                years=years,
+                variables=variables,
+                crs=crs,
+                batch_shape=batch_shape,
+            )
+        else:
+            datasets = iter(
+                (
+                    self.query_bbox(
+                        bounds,
+                        years=years,
+                        variables=variables,
+                        crs=crs,
+                    ),
+                )
+            )
+
+        for batch_index, dataset in enumerate(datasets):
+            if output_format == "netcdf":
+                filename = f"batch_{batch_index:06d}.nc" if batch_mode else "data.nc"
+                path = output_path / filename
+                if path.exists() and not overwrite:
+                    raise FileExistsError(path)
+                dataset.to_netcdf(path)
+                written.append(path)
+                continue
+
+            if output_format == "zarr":
+                filename = f"batch_{batch_index:06d}.zarr" if batch_mode else "data.zarr"
+                path = output_path / filename
+                if path.exists() and not overwrite:
+                    raise FileExistsError(path)
+                try:
+                    dataset.to_zarr(path, mode="w")
+                except ModuleNotFoundError as exc:
+                    raise ModuleNotFoundError(
+                        "Zarr export requires the optional 'zarr' package; "
+                        "install it with 'pip install zarr'."
+                    ) from exc
+                written.append(path)
+                continue
+
+            try:
+                import rasterio
+                from affine import Affine
+            except ImportError as exc:  # pragma: no cover - dependency is required
+                raise ImportError("COG export requires rasterio and affine") from exc
+
+            transform = Affine(*dataset.attrs["transform"])
+            crs_wkt = dataset.attrs["crs_wkt"]
+            for time_index, year in enumerate(dataset.time.values.tolist()):
+                filename = (
+                    f"batch_{batch_index:06d}_{int(year)}.tif"
+                    if batch_mode
+                    else f"{int(year)}.tif"
+                )
+                path = output_path / filename
+                if path.exists() and not overwrite:
+                    raise FileExistsError(path)
+                values = [
+                    np.asarray(dataset[name].values[time_index], dtype="float32")
+                    for name in dataset.data_vars
+                ]
+                with rasterio.open(
+                    path,
+                    "w",
+                    driver="COG",
+                    width=values[0].shape[1],
+                    height=values[0].shape[0],
+                    count=len(values),
+                    dtype="float32",
+                    crs=crs_wkt,
+                    transform=transform,
+                    nodata=np.nan,
+                    compress="DEFLATE",
+                    blocksize=256,
+                    BIGTIFF="IF_SAFER",
+                ) as destination:
+                    for band_index, (name, array) in enumerate(
+                        zip(dataset.data_vars, values, strict=True), start=1
+                    ):
+                        destination.write(array, band_index)
+                        destination.set_band_description(band_index, name)
+                written.append(path)
+
+        return written
+
     def query_point(
         self,
         longitude: float,

@@ -57,6 +57,8 @@ overridden through the constructor or the `DHIDB_ENDPOINT_URL` and
   an xarray `Dataset`.
 - `iter_bbox(bounds, years=None, variables=None, crs="EPSG:4326",
   batch_shape={"y": 256, "x": 256})` yields bounded xarray `Dataset` batches.
+- `export_bbox(bounds, output, format="zarr", ..., batch_shape=...)` streams
+  batches directly to NetCDF, Zarr, or COG files.
 - `query_polygon(geometry, years=None, variables=None, crs="EPSG:4326",
   all_touched=False)` returns a masked xarray `Dataset`.
 
@@ -89,3 +91,30 @@ limit applies to each batch; choose a smaller batch shape if a multi-year
 batch exceeds that limit. Batches are released normally after each loop
 iteration, so callers should process or persist them before requesting the
 next batch.
+
+### Streaming exports
+
+Use `export_bbox()` when the result should be persisted. With no
+`batch_shape`, NetCDF/Zarr produce one complete output and COG produces one
+multiband raster per year:
+
+```python
+with DHIProvider() as db:
+    paths = db.export_bbox(
+        bounds=(5.8, 47.2, 15.1, 55.1),
+        output="exports/germany",
+        format="zarr",
+        years=range(2014, 2026),
+        variables=["dhi_cum", "dhi_min", "dhi_var"],
+        batch_shape={"y": 256, "x": 256},
+    )
+```
+
+Supported formats are `"netcdf"`, `"zarr"`, and `"cog"` (with `"nc"` and
+`"tif"` aliases). Without `batch_shape`, NetCDF writes `data.nc`, Zarr
+writes `data.zarr`, and COG writes `{year}.tif`. COG bands correspond to the
+selected variables, are stored as float32, and include band descriptions.
+With `batch_shape`, NetCDF/Zarr write one `batch_*.nc`/`batch_*.zarr` per
+spatial batch and COG writes one `batch_*_{year}.tif` per batch and year. The
+method returns the paths written. Zarr export requires the optional `zarr`
+dependency (`pip install dhidb[zarr]`).
