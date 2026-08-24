@@ -62,6 +62,77 @@ overridden through the constructor or the `DHIDB_ENDPOINT_URL` and
 - `query_polygon(geometry, years=None, variables=None, crs="EPSG:4326",
   all_touched=False)` returns a masked xarray `Dataset`.
 
+### Query examples
+
+#### Point time series
+
+`query_point()` returns a pandas `DataFrame` with one row per requested year:
+
+```python
+with DHIProvider() as db:
+    leipzig = db.query_point(
+        longitude=12.3731,
+        latitude=51.3397,
+        years=range(2014, 2026),
+        variables=["dhi_cum", "dhi_min", "dhi_var", "valid_count"],
+    )
+
+print(leipzig[["dhi_cum", "dhi_min", "dhi_var"]])
+```
+
+#### Bounding-box subset
+
+`query_bbox()` returns an Xarray `Dataset` with `(time, y, x)` dimensions:
+
+```python
+with DHIProvider() as db:
+    germany = db.query_bbox(
+        bounds=(5.8, 47.2, 15.1, 55.1),
+        years=[2020, 2021, 2022],
+        variables=["dhi_cum", "dhi_min", "dhi_var", "valid_count"],
+    )
+
+print(germany)
+germany.to_netcdf("germany_dhi.nc")
+```
+
+#### Polygon subset
+
+`query_polygon()` accepts a GeoJSON path, GeoJSON mapping, Shapely geometry,
+or object implementing `__geo_interface__`. Pixels outside the polygon are
+returned as missing values:
+
+```python
+with DHIProvider() as db:
+    protected_area = db.query_polygon(
+        "study_area.geojson",
+        years=2024,
+        variables=["dhi_cum", "dhi_min", "dhi_var"],
+        crs="EPSG:4326",
+        all_touched=True,
+    )
+
+print(protected_area.dhi_cum)
+```
+
+For a large polygon, stream its bounding box with `iter_bbox()` and apply a
+mask per batch as shown in the [query recipes](./queries#streaming-a-large-polygon).
+
+#### Projected coordinates
+
+Bounds and points can be supplied in another coordinate reference system by
+setting `crs`:
+
+```python
+with DHIProvider() as db:
+    projected = db.query_bbox(
+        bounds=(300000, 5600000, 400000, 5700000),
+        crs="EPSG:25833",
+        years=2024,
+        variables=["dhi_cum"],
+    )
+```
+
 All query methods read only the requested spatial and temporal subset.
 The returned DHI values retain their native units: `dhi_cum` is `m2 m-2 day`,
 `dhi_min` is `m2 m-2`, and `dhi_var` and `dhi_combined` are dimensionless.
