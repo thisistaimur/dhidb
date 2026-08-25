@@ -8,6 +8,10 @@ Indices database stored as a dense TileDB array on public S3-compatible object
 storage. It supports point, bounding-box, and polygon queries without first
 downloading the complete database.
 
+DHIs are widely used in spatial ecology as interpretable predictors of habitat
+quality and vegetation dynamics, including covariates in species distribution
+models (SDMs) and biodiversity assessments.
+
 
 ## Installation
 

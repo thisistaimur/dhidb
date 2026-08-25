@@ -29,6 +29,10 @@ using CLMS gross primary production and land-surface phenology products. This gi
 global Earth-observation basis for analysing vegetation productivity and
 seasonality.
 
+In spatial ecology, DHIs provide interpretable habitat and productivity
+features for species distribution models, biodiversity assessments, and other
+analyses of species–environment relationships.
+
 The resulting data remain in a dense TileDB array on public S3-compatible
 object storage; the Python package retrieves only the years, variables, and
 spatial window requested by the user.
