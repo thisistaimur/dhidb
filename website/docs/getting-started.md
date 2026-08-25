@@ -6,21 +6,7 @@
 pip install dhidb
 ```
 
-DHIDB supports Python 3.10 and newer. The regular installation includes the
-runtime dependencies needed for querying the database:
-
-| Dependency | Version requirement |
-|---|---|
-| `affine` | `>=2.4` |
-| `numpy` | `>=1.26,<3` |
-| `pandas` | `>=2.1` |
-| `pyproj` | `>=3.6` |
-| `rasterio` | `>=1.3` |
-| `shapely` | `>=2.0` |
-| `tiledb` | `>=0.35,<0.38` |
-| `xarray` | `>=2024.1` |
-
-Optional output formats are provided as extras:
+DHIDB supports Python 3.10 and newer. 
 
 ```bash
 pip install "dhidb[netcdf]"  # adds scipy>=1.11 for NetCDF export
