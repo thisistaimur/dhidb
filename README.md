@@ -69,11 +69,13 @@ with DHIProvider() as db:
     print(db.years)
     print(db.variables)
 
-    germany = db.query_bbox(
-        bounds=(5.8, 47.2, 15.1, 55.1),
-        years=[2020, 2021, 2022],
+    for batch in db.iter_bbox(
+        bounds=(12.25, 51.25, 12.50, 51.40),  # Leipzig, Germany
+        years=range(2014, 2026),
         variables=["dhi_cum", "dhi_min", "dhi_var", "valid_count"],
-    )
+        batch_shape={"y": 256, "x": 256},
+    ):
+        print(batch.sizes)
 ```
 
 ## Documentation
