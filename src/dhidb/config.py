@@ -6,7 +6,7 @@ import os
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 
-DEFAULT_ARRAY_URI = "s3://dhidb/gpp_global_300m_2014_2025_v1_repacked"
+DEFAULT_ARRAY_URI = "s3://dhidb/gpp_global_300m_2014_2025_v1_cv"
 DEFAULT_ENDPOINT_URL = "https://vip.s3.ufz.de"
 DEFAULT_YEARS = tuple(range(2014, 2026))
 
